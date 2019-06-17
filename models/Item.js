@@ -67,6 +67,18 @@ const itemSchema = new Schema({
     type: String,
     required: false
   },
+  circulating_supply: {
+    type: Number,
+    required: false
+  },
+  total_supply: {
+    type: Number,
+    required: false
+  },
+  max_supply: {
+    type: Number,
+    required: false
+  }
 });
 
 module.exports = mongoose.model("items", itemSchema);
