@@ -3,40 +3,38 @@ const keys = require("../config/keys");
 const rp = require("request-promise");
 
 module.exports.getCoins = async (req, res) => {
-  const getCoins = (start = 1, limit = 1000, conver = "USD") => {
-    rp({
-      method: "GET",
-      uri: `${keys.uri}/listings/latest`,
-      qs: {
-        start: start,
-        limit: limit,
-        convert: conver
-      },
-      headers: {
-        "X-CMC_PRO_API_KEY": keys.secret
-      },
-      json: true,
-      gzip: true
-    })
-      .then(response => {
-        let arrWithId = [];
-        let str = "";
+  rp({
+    method: "GET",
+    uri: `${keys.uri}/listings/latest`,
+    qs: {
+      start: 1,
+      limit: 1000,
+      convert: "USD"
+    },
+    headers: {
+      "X-CMC_PRO_API_KEY": keys.secret
+    },
+    json: true,
+    gzip: true
+  })
+    .then(response => {
+      let arrWithId = [];
+      let str = "";
 
-        response.data.forEach(element => {
-          arrWithId.push(element.id);
-        });
-
-        arrWithId.map(item => {
-          str += "," + item;
-        });
-
-        let ids = str.replace(",", "");
-        getAllData(ids);
-      })
-      .catch(err => {
-        console.log("API call error:", err.message);
+      response.data.forEach(element => {
+        arrWithId.push(element.id);
       });
-  };
+
+      arrWithId.map(item => {
+        str += "," + item;
+      });
+
+      let ids = str.replace(",", "");
+      getAllData(ids);
+    })
+    .catch(err => {
+      console.log("API call error:", err.message);
+    });
 };
 
 module.exports.getCoinsFullInfo = async (req, res) => {
@@ -119,7 +117,7 @@ module.exports.getCoinsFullInfo = async (req, res) => {
 };
 
 module.exports.getCoinsFromDb = async (req, res) => {
-  const coins = await Item.find({}).limit(3);
+  const coins = await Item.find({});
   if (coins) {
     res.status(200).send({
         coins
