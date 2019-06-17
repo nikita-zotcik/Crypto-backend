@@ -35,6 +35,10 @@ const itemSchema = new Schema({
     type: String,
     required: false
   },
+  chat: {
+    type: String,
+    required: false
+  },
   reddit: {
     type: String,
     required: false
