@@ -159,6 +159,37 @@ module.exports.updateCoinsInfoSupply = async (req, res) => {
     });
 };
 
+module.exports.updateInfoExchanges = async (req, res) => {
+  rp({
+    method: "GET",
+    uri: `${keys.uri}/listings/latest?limit=1000&start=2000`,
+    headers: {
+      "X-CMC_PRO_API_KEY": keys.secret
+    },
+    json: true,
+    gzip: true
+  })
+    .then(async response => {
+      let coins = response.data;
+      for (coin in coins) {
+        const currentCoin = coins[coin];
+        const candidate = await Item.findOne({
+          id: currentCoin.id
+        });
+        if (candidate) {
+          console.log("item exist in the database", candidate.name);
+          await Item.updateOne(
+            { "id" : currentCoin.id },
+            { $set: { "num_market_pairs": currentCoin.num_market_pairs ? currentCoin.num_market_pairs : 0 }}
+          );
+        }
+      }
+    })
+    .catch(err => {
+      console.log("API call error:", err.message);
+    });
+};
+
 module.exports.getCoinsFromDb = async (req, res) => {
   const coins = await Item.find({});
   if (coins) {

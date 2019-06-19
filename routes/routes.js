@@ -14,4 +14,7 @@ router.get("/getCoinsFromDb", controller.getCoinsFromDb);
 //localhost:5000/api/updateCoinsInfoSupply
 router.get("/updateCoinsInfoSupply", controller.updateCoinsInfoSupply);
 
+//localhost:5000/api/updateInfoExchanges
+router.get("/updateInfoExchanges", controller.updateInfoExchanges);
+
 module.exports = router;

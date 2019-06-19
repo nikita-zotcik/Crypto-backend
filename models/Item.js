@@ -78,6 +78,10 @@ const itemSchema = new Schema({
   max_supply: {
     type: Number,
     required: false
+  },
+  num_market_pairs: {
+    type: Number,
+    required: false
   }
 });
 
