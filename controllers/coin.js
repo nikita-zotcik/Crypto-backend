@@ -1,4 +1,5 @@
 const Item = require("../models/Item");
+const Exchanges = require("../models/Exchanges");
 const keys = require("../config/keys");
 const rp = require("request-promise");
 
@@ -192,6 +193,11 @@ module.exports.updateInfoExchangesCoins = async (req, res) => {
 
 module.exports.getCoinsFromDb = async (req, res) => {
   const coins = await Item.find({});
+  let exchanges = await Exchanges.find({});
+  exchanges.sort((a, b) => b.volume_30d - a.volume_30d);
+  coins.forEach(coin => {
+    coin.exchangesTop = exchanges.slice(0,5);
+  });
   if (coins) {
     res.status(200).send({
         coins
