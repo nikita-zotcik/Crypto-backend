@@ -83,8 +83,8 @@ const itemSchema = new Schema({
     type: Number,
     required: false
   },
-  exchangesTop: {
-    type: Array,
+  exchanges_top: {
+    type: Object,
     required: false
   },
 });

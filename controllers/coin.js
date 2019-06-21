@@ -66,7 +66,6 @@ module.exports.getCoinsFullInfo = async (req, res) => {
             { "id" : currentCoin.id },
             { $set: { "chat": currentCoin.urls.chat && currentCoin.urls.chat.length !== 0 ? currentCoin.urls.chat[0] : "" }});
         } else {
-          //   console.log("currCoin", currentCoin);
           const {
             id,
             logo,
@@ -193,11 +192,6 @@ module.exports.updateInfoExchangesCoins = async (req, res) => {
 
 module.exports.getCoinsFromDb = async (req, res) => {
   const coins = await Item.find({});
-  let exchanges = await Exchanges.find({});
-  exchanges.sort((a, b) => b.volume_30d - a.volume_30d);
-  coins.forEach(coin => {
-    coin.exchangesTop = exchanges.slice(0,5);
-  });
   if (coins) {
     res.status(200).send({
         coins

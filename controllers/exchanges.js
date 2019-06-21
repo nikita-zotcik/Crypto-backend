@@ -1,4 +1,5 @@
 const Exchanges = require("../models/Exchanges");
+const Item = require("../models/Item");
 const keys = require("../config/keys");
 const rp = require("request-promise");
 
@@ -72,50 +73,86 @@ module.exports.updateVolumeExchanges = async (req, res) => {
 };
 
 module.exports.updateInfoExchanges = async (req, res) => {
-  // const ids = '331,157,343,350,410,403,330,112,402,301,73,106,346,315,200,351,139,201,363,16,17,21,22,24,32,34,36,37,42,46,50,57,61,68,70,71,72,77,80,82,89,92,95,96,98,100,102,104,107,108,109,110,111,121,125,127,137,138,142,144,146,147,149,151,152,155,158,166,171,174,177,183,185,191,193,194,196,202,206,207,209,210,213,219,221,223,224,225,228,232,234,235,238,242,243,245,246,248,249,250,252,253,254,257,258,261,265,267,270,277,278,279,280,286,288,289,290,292,293,294,298,300,302,303,304,307,310,311,312,314,316,317,320,321,322,323,324,325,326,327,328,333,334,335,337,339,340,341,344,347,348,352,353,354,355,357,358,359,360,361,362,364,367,368,369,370,372,373,374,375,376,380,382,383,384,385,386,388,391,392,394,398,400,401,404,405,406,407,409,411,412,413';
-  rp({
-    method: "GET",
-    uri: `${keys.uri}/exchange/info?id=${ids}`,
-    headers: {
-      "X-CMC_PRO_API_KEY": keys.secret
-    },
-    json: true,
-    gzip: true
-  })
-    .then(async response => {
-      let exchanges = response.data;
-      for (item in exchanges) {
-        const currentExchange = exchanges[item];
-        const candidate = await Exchanges.findOne({
-          id: currentExchange.id
-        });
-        if (candidate) {
-          console.log("item exist in the database", candidate.name);
-          const {
-            logo,
-            urls,
-          } = currentExchange;
-          await Exchanges.updateOne(
-            { "id" : currentExchange.id },
+  let id = [];
+  for (let y = 0; y < id.length; y++) {
+    rp({
+      method: "GET",
+      uri: `${keys.uri}/cryptocurrency/market-pairs/latest?id=${id[y]}&convert=USD`,
+      headers: {
+        "X-CMC_PRO_API_KEY": keys.secret
+      },
+      json: true,
+      gzip: true
+    })
+      .then(async response => {
+        let result = [];
+        let str = "";
+        let exchanges = response.data && response.data.market_pairs;
+
+        if (exchanges.length !== 0 && exchanges.length >= 5) {
+          let aaaa = exchanges.map((coin) => {
+            return coin.quote.USD.price;
+          });
+          let bbbb = aaaa.sort().reverse();
+          bbbb.length = 5;
+          for (let i = 0; i < 5; i++) {
+            exchanges.map((coin) => {
+              if(coin.quote.USD.price === bbbb[i]) {
+                result.push(coin.exchange.id);
+                str += `,${coin.exchange.id}`;
+              }
+            });
+          }
+        } else {
+          exchanges.map((coin) => {
+            result.push(coin.exchange.id);
+            str += `,${coin.exchange.id}`;
+          })
+        }
+        let ids = str.replace(",", "");
+
+        // console.log('arr--------------', ids);
+
+        rp({
+          method: "GET",
+          uri: `${keys.uri}/exchange/info?id=${ids}`,
+          headers: {
+            "X-CMC_PRO_API_KEY": keys.secret
+          },
+          json: true,
+          gzip: true
+        }).then(async response => {
+          let exachanges = [];
+
+          for(let exchangeId in response.data) {
+            const {
+              logo,
+              urls,
+            } = response.data[exchangeId];
+
+            exachanges.push({
+              "logo": logo,
+              "website": urls.website && urls.website.length !== 0 ? urls.website[0] : "",
+              "twitter": urls.twitter && urls.twitter.length !== 0 ? urls.twitter[0] : "",
+              "chat": urls.chat && urls.chat.length !== 0 ? urls.chat[0] : "",
+              "fee": urls.fee && urls.fee.length !== 0 ? urls.fee[0] : "",
+              "blog": urls.blog && urls.blog.length !== 0 ? urls.blog[0] : "",
+            });
+          }
+          await Item.updateOne(
+            { id: id[y] },
             {
-              $set:
-                {
-                  "logo": logo,
-                  "website": urls.website && urls.website.length !== 0 ? urls.website[0] : "",
-                  "twitter": urls.twitter && urls.twitter.length !== 0 ? urls.twitter[0] : "",
-                  "chat": urls.chat && urls.chat.length !== 0 ? urls.chat[0] : "",
-                  "fee": urls.fee && urls.fee.length !== 0 ? urls.fee[0] : "",
-                  "blog": urls.blog && urls.blog.length !== 0 ? urls.blog[0] : "",
-                }
+              exchanges_top: exachanges
             }
           );
-        }
-      }
-      res.status(200).send("Success update info exchanges!")
-    })
-    .catch(err => {
-      console.log("API call error:", err.message);
-    });
+        }).catch(err => err);
+
+        res.status(200).send("Success update info exchanges!")
+      })
+      .catch(err => {
+        console.log("API call error:", err.message);
+      });
+  }
 };
 
 module.exports.getExchangesFromDb = async (req, res) => {
