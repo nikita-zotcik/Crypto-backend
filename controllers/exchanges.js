@@ -6,7 +6,7 @@ const rp = require("request-promise");
 module.exports.updateVolumeExchanges = async (req, res) => {
   rp({
     method: "GET",
-    uri: `${keys.uri}/exchange/listings/latest?limit=1000&market_type=no_fees&convert=USD&start=1`,
+    uri: `${keys.uri}/exchange/listings/latest?limit=1000`,
     headers: {
       "X-CMC_PRO_API_KEY": keys.secret
     },
@@ -73,86 +73,50 @@ module.exports.updateVolumeExchanges = async (req, res) => {
 };
 
 module.exports.updateInfoExchanges = async (req, res) => {
-  let id = [];
-  for (let y = 0; y < id.length; y++) {
-    rp({
-      method: "GET",
-      uri: `${keys.uri}/cryptocurrency/market-pairs/latest?id=${id[y]}&convert=USD`,
-      headers: {
-        "X-CMC_PRO_API_KEY": keys.secret
-      },
-      json: true,
-      gzip: true
-    })
-      .then(async response => {
-        let result = [];
-        let str = "";
-        let exchanges = response.data && response.data.market_pairs;
-
-        if (exchanges.length !== 0 && exchanges.length >= 5) {
-          let aaaa = exchanges.map((coin) => {
-            return coin.quote.USD.price;
-          });
-          let bbbb = aaaa.sort().reverse();
-          bbbb.length = 5;
-          for (let i = 0; i < 5; i++) {
-            exchanges.map((coin) => {
-              if(coin.quote.USD.price === bbbb[i]) {
-                result.push(coin.exchange.id);
-                str += `,${coin.exchange.id}`;
-              }
-            });
-          }
-        } else {
-          exchanges.map((coin) => {
-            result.push(coin.exchange.id);
-            str += `,${coin.exchange.id}`;
-          })
-        }
-        let ids = str.replace(",", "");
-
-        // console.log('arr--------------', ids);
-
-        rp({
-          method: "GET",
-          uri: `${keys.uri}/exchange/info?id=${ids}`,
-          headers: {
-            "X-CMC_PRO_API_KEY": keys.secret
-          },
-          json: true,
-          gzip: true
-        }).then(async response => {
-          let exachanges = [];
-
-          for(let exchangeId in response.data) {
-            const {
-              logo,
-              urls,
-            } = response.data[exchangeId];
-
-            exachanges.push({
-              "logo": logo,
-              "website": urls.website && urls.website.length !== 0 ? urls.website[0] : "",
-              "twitter": urls.twitter && urls.twitter.length !== 0 ? urls.twitter[0] : "",
-              "chat": urls.chat && urls.chat.length !== 0 ? urls.chat[0] : "",
-              "fee": urls.fee && urls.fee.length !== 0 ? urls.fee[0] : "",
-              "blog": urls.blog && urls.blog.length !== 0 ? urls.blog[0] : "",
-            });
-          }
-          await Item.updateOne(
-            { id: id[y] },
+  // const ids = '452,455,438,249,16,17,21,24,32,34,36,37,42,46,50,57,61,68,70,71,72,73,77,80,82,89,92,95,96,98,100,102,104,106,107,108,109,110,111,112,121,125,127,137,138,139,142,144,146,147,149,151,152,155,157,158,166,171,174,177,183,185,191,193,194,196,200,201,202,206,207,209,210,213,219,221,223,224,225,228,232,234,235,238,242,243,245,246,248,250,252,254,257,258,261,265,267,270,277,278,279,280,286,288,289,290,292,293,294,298,300,301,302,303,304,307,310,312,314,315,316,317,320,321,322,323,324,325,326,327,331,334,335,337,339,340,341,343,346,347,350,351,352,353,354,355,357,358,359,360,361,362,363,364,367,368,369,370,372,373,374,375,376,380,382,384,385,386,388,391,394,398,400,402,403,404,405,407,409,410,411,412,413,330,22,253,311,328,333,344,348,383,392,401,406,453,430,459,448,421,482,464,479,454,215,473,467,446,463,422,480,460,415,478,439,433,481,470,420,465,423,468,477,469,434';
+  rp({
+    method: "GET",
+    uri: `${keys.uri}/exchange/info?id=${ids}`,
+    headers: {
+      "X-CMC_PRO_API_KEY": keys.secret
+    },
+    json: true,
+    gzip: true
+  })
+    .then(async response => {
+      let exchanges = response.data;
+      for (item in exchanges) {
+        const currentExchange = exchanges[item];
+        const candidate = await Exchanges.findOne({
+          id: currentExchange.id
+        });
+        if (candidate) {
+          console.log("item exist in the database", candidate.name);
+          const {
+            logo,
+            urls,
+          } = currentExchange;
+          await Exchanges.updateOne(
+            { "id" : currentExchange.id },
             {
-              exchanges_top: exachanges
+              $set:
+                {
+                  "logo": logo,
+                  "website": urls.website && urls.website.length !== 0 ? urls.website[0] : "",
+                  "twitter": urls.twitter && urls.twitter.length !== 0 ? urls.twitter[0] : "",
+                  "chat": urls.chat && urls.chat.length !== 0 ? urls.chat[0] : "",
+                  "fee": urls.fee && urls.fee.length !== 0 ? urls.fee[0] : "",
+                  "blog": urls.blog && urls.blog.length !== 0 ? urls.blog[0] : "",
+                }
             }
           );
-        }).catch(err => err);
-
-        res.status(200).send("Success update info exchanges!")
-      })
-      .catch(err => {
-        console.log("API call error:", err.message);
-      });
-  }
+        }
+      }
+      res.status(200).send("Success update info exchanges!")
+    })
+    .catch(err => {
+      console.log("API call error:", err.message);
+    });
 };
 
 module.exports.getExchangesFromDb = async (req, res) => {

@@ -198,3 +198,41 @@ module.exports.getCoinsFromDb = async (req, res) => {
     })
   }
 };
+
+module.exports.updateTopExchanges = async (req, res) => {
+  const exchangeDB = await Exchanges.find({});
+  let ids = [];
+  exchangeDB.forEach(item => ids.push(+item.id));
+  ids1.forEach(id => {
+   rp({
+     method: "GET",
+     uri: `${keys.uri}/cryptocurrency/market-pairs/latest?id=${id}`,
+     headers: {
+       "X-CMC_PRO_API_KEY": keys.secret
+     },
+     json: true,
+     gzip: true
+   })
+     .then(async response => {
+       let exchanges = [];
+       let exchangesId = [];
+       response.data.market_pairs.forEach((pair, index) => {
+         if(exchangesId.indexOf(pair.exchange.id) < 0) {
+           exchanges[index] = pair.exchange;
+           exchangesId.push(pair.exchange.id);
+         }
+       });
+       exchanges.map((item, index) => {
+         exchanges[index].volume_30d = exchangeDB[ids.indexOf(item.id)].volume_30d;
+         exchanges[index].logo = exchangeDB[ids.indexOf(item.id)].logo;
+         exchanges[index].website = exchangeDB[ids.indexOf(item.id)].website;
+       });
+       exchanges.sort((a, b) => b.volume_30d - a.volume_30d);
+       await Item.updateOne(
+         { "id" : id },
+         { $set: { "exchanges_top": exchanges.slice(0,5), "num_market_pairs":exchangesId.length}}
+       );
+     })
+ });
+  res.status(200).send("updated exchange_top")
+};
