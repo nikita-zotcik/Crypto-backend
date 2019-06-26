@@ -70,7 +70,7 @@ module.exports.newTransactions = async (req, res) => {
 module.exports.getTransactionsFromDb = async (req, res) => {
   const page = 1;
   const last_id = '';
-  const transactions = page === 1 ? await Transactions.find().limit(1000) : await Transactions.find({'_id': {'$gt': last_id}}).limit(100);
+  const transactions = page === 1 ? await Transactions.find() : await Transactions.find({'_id': {'$gt': last_id}});
   transactions.sort((a, b) => b.timestamp - a.timestamp);
   if (transactions) {
     res.status(200).send({
