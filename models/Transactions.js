@@ -15,7 +15,7 @@ const transactionSchema = new Schema({
     type: Number,
     required: false
   },
-  coin: {
+  blockchain: {
     type: String,
     required: false
   },
@@ -23,12 +23,12 @@ const transactionSchema = new Schema({
     type: Number,
     required: false
   },
-  sender: {
-    type: String,
+  from: {
+    type: Object,
     required: false
   },
-  receiver: {
-    type: String,
+  to: {
+    type: Object,
     required: false
   },
   symbol: {
