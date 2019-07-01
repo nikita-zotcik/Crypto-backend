@@ -82,7 +82,11 @@ const itemSchema = new Schema({
   num_market_pairs: {
     type: Number,
     required: false
-  }
+  },
+  exchanges_top: {
+    type: Object,
+    required: false
+  },
 });
 
 module.exports = mongoose.model("items", itemSchema);
