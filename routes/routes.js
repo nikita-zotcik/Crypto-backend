@@ -1,6 +1,8 @@
 const express = require("express");
 const coin = require("../controllers/coin");
 const exchanges = require("../controllers/exchanges");
+const telegram = require("../controllers/telegram");
+const transactions = require("../controllers/transactions");
 const router = express.Router();
 
 //localhost:5000/api/getCoins
@@ -18,6 +20,10 @@ router.get("/updateCoinsInfoSupply", coin.updateCoinsInfoSupply);
 //localhost:5000/api/updateInfoExchangesCoins
 router.get("/updateInfoExchangesCoins", coin.updateInfoExchangesCoins);
 
+//localhost:5000/api/updateTopExchanges
+router.get("/updateTopExchanges", coin.updateTopExchanges);
+
+
 //localhost:5000/api/updateVolumeExchanges
 router.get("/updateVolumeExchanges", exchanges.updateVolumeExchanges);
 
@@ -26,5 +32,18 @@ router.get("/updateInfoExchanges", exchanges.updateInfoExchanges);
 
 //localhost:5000/api/getExchangesFromDb
 router.get("/getExchangesFromDb", exchanges.getExchangesFromDb);
+
+//localhost:5000/api/getExchangesFromDb
+router.get("/getExchangesFromDb", exchanges.getExchangesFromDb);
+
+
+//localhost:5000/api/newTransactions
+router.get("/newTransactions", transactions.newTransactions);
+
+//localhost:5000/api/getTransactionsFromDb
+router.get("/getTransactionsFromDb", transactions.getTransactionsFromDb);
+
+//localhost:5000/api/getTelegram
+router.get("/getTelegram", telegram.getTelegram);
 
 module.exports = router;

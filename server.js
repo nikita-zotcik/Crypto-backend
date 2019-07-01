@@ -5,6 +5,7 @@ const coinRoutes = require("./routes/routes");
 const bodyParser = require("body-parser");
 const app = express();
 const port = process.env.PORT || 5000;
+require('dotenv').config();
 
 mongoose.connect(
   "mongodb://admin:332646Aa@ds157276.mlab.com:57276/mern-auth",
