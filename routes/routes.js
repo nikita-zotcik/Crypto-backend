@@ -3,6 +3,7 @@ const coin = require("../controllers/coin");
 const exchanges = require("../controllers/exchanges");
 const transactions = require("../controllers/transactions");
 const telegram = require("../controllers/telegram");
+const tgAuth = require("../controllers/tgAuth");
 const router = express.Router();
 
 //localhost:5000/api/getCoins
@@ -40,5 +41,6 @@ router.get("/getTransactionsFromDb", transactions.getTransactionsFromDb);
 
 //localhost:5000/api/getTelegram
 router.get("/getTelegram", telegram.getTelegram);
+router.get("/tgAuth", tgAuth.tgAuth);
 
 module.exports = router;

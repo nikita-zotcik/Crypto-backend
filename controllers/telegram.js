@@ -9,7 +9,14 @@ let firstRequest = true;
 const channels = require('../channels/Channels');
 let channelData = null;
 
+// process.env.phone_code = req.params.code;
+// setInterval(()=> {
+//     if (process.env.phone_code) {
+//
+//     }
+// }, 1000)
 module.exports.getTelegram = async (req, res) => {
+    try {
     const link = req.query.link;
     const airgram = new Airgram({id: process.env.APP_ID, hash: process.env.APP_HASH});
 
@@ -40,17 +47,35 @@ module.exports.getTelegram = async (req, res) => {
     }
 
 // Authorization
-    airgram.use(airgram.auth);
-    airgram.auth.use(new AuthDialog({
+        /*
+        * let interval = null;
+        *
+        * inside code callback
+        * interval = setInterval(()=>{
+        *   here checking DB
+        *
+        * },3000)
+        * */
+
+    // airgram.use(airgram.auth);
+    airgram.auth.use(
+        // {
+        //     phoneNumber: '+1234567890',
+        //     firstName: 'John',
+        //     lastName: 'Smith',
+        //     code: ''
+        // }
+        new AuthDialog({
         samePhoneNumber: () => false,
         phoneNumber: () => process.env.PHONE_NUMBER || prompt(`Please enter your phone number:\n`),
-        code: () => prompt(`Please enter the secret code:\n`)
-    }));
+        code: () => process.env.phone_code
+    })
+    );
 
 // Updates
     airgram.use(airgram.updates);
     airgram.updates.use(({update}, next) => {
-        console.log(`"${update._}" ${JSON.stringify(update)}`);
+        // console.log(`"${update._}" ${JSON.stringify(update)}`);
         return next();
     });
 
@@ -91,10 +116,8 @@ module.exports.getTelegram = async (req, res) => {
                     }
                 });
 
-            console.log(dialogs);
 // push messages and authors
             dialogs.messages.forEach((item) => {
-                console.log(item);
                 let message = {};
                 dialogs.users.forEach((i) => {
                     if (i.id === item.from_id) {
@@ -105,9 +128,10 @@ module.exports.getTelegram = async (req, res) => {
                             last_name: i.last_name,
                             username: i.username,
                             photo: i.photo,
-                        }
+                        };
                     }
                 });
+
                 message.item = {
                     id: item.id,
                     message: item.message,
@@ -116,13 +140,14 @@ module.exports.getTelegram = async (req, res) => {
                     date: item.date,
                     // media: item.media
                 };
+
                 messageArray.push(message)
             });
             res.send(messageArray);
-            console.log(dialogs);
-            console.log(messageArray);
             firstRequest = false;
         }
-    });
+        })
+    }catch(err){
+        res.status(500).send(err);
+    }
 };
-
