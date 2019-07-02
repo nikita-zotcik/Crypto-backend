@@ -38,6 +38,9 @@ router.get("/newTransactions", transactions.newTransactions);
 //localhost:5000/api/getTransactionsFromDb
 router.get("/getTransactionsFromDb", transactions.getTransactionsFromDb);
 
+//localhost:5000/api/deleteRecords
+router.get("/deleteRecords", transactions.deleteRecords);
+
 //localhost:5000/api/getTelegram
 router.get("/getTelegram", telegram.getTelegram);
 
