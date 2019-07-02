@@ -2,6 +2,7 @@ const Item = require("../models/Item");
 const Exchanges = require("../models/Exchanges");
 const keys = require("../config/keys");
 const rp = require("request-promise");
+var cron = require('node-cron');
 
 module.exports.getCoins = async (req, res) => {
   rp({
@@ -124,39 +125,52 @@ module.exports.getCoinsFullInfo = async (req, res) => {
 };
 
 module.exports.updateCoinsInfoSupply = async (req, res) => {
-  rp({
-    method: "GET",
-    uri: `${keys.uri}/cryptocurrency/listings/latest?limit=1000&start=2000`,
-    headers: {
-      "X-CMC_PRO_API_KEY": keys.secret
-    },
-    json: true,
-    gzip: true
-  })
-    .then(async response => {
-      let coins = response.data;
-      for (coin in coins) {
-        const currentCoin = coins[coin];
-        const candidate = await Item.findOne({
-          id: currentCoin.id
-        });
-        if (candidate) {
-          console.log("item exist in the database", candidate.name);
-          await Item.updateOne(
-            { "id" : currentCoin.id },
-            { $set: {
-                "circulating_supply": currentCoin.circulating_supply ? currentCoin.circulating_supply : 0,
-                "total_supply": currentCoin.total_supply ? currentCoin.total_supply : 0,
-                "max_supply": currentCoin.max_supply ? currentCoin.max_supply : 0,
-              }
-            }
-          );
-        }
-      }
+  let start = 1;
+  const countRecords = await Item.countDocuments();
+  while (start < countRecords) {
+    await rp({
+      method: "GET",
+      uri: `${keys.uri}/cryptocurrency/listings/latest?limit=1000&start=${start}`,
+      headers: {
+        "X-CMC_PRO_API_KEY": keys.secret
+      },
+      json: true,
+      gzip: true
     })
-    .catch(err => {
-      console.log("API call error:", err.message);
-    });
+      .then(async response => {
+        let coins = response.data;
+        for (coin in coins) {
+          const currentCoin = coins[coin];
+          const candidate = await Item.findOne({
+            id: currentCoin.id
+          });
+          if (candidate) {
+            console.log("item exist in the database", candidate.name);
+            const {circulating_supply, total_supply, max_supply, quote} = currentCoin;
+            await Item.updateOne(
+              {"id": currentCoin.id},
+              {
+                $set: {
+                  "circulating_supply": circulating_supply ? circulating_supply : 0,
+                  "total_supply": total_supply ? total_supply : 0,
+                  "max_supply": max_supply ? max_supply : 0,
+                  "price": quote.USD.price ? quote.USD.price : 0,
+                  "volume_24h": quote.USD.volume_24h ? quote.USD.volume_24h : 0,
+                  "percent_change_1h": quote.USD.percent_change_1h ? quote.USD.percent_change_1h : 0,
+                  "percent_change_24h": quote.USD.percent_change_24h ? quote.USD.percent_change_24h : 0,
+                  "percent_change_7d": quote.USD.percent_change_7d ? quote.USD.percent_change_7d : 0,
+                  "market_cap": quote.USD.market_cap ? quote.USD.market_cap : 0,
+                }
+              }
+            );
+          }
+        }
+        start += 1000;
+      })
+      .catch(err => {
+        console.log("API call error:", err.message);
+      });
+  }
 };
 
 module.exports.updateInfoExchangesCoins = async (req, res) => {
@@ -191,7 +205,7 @@ module.exports.updateInfoExchangesCoins = async (req, res) => {
 };
 
 module.exports.getCoinsFromDb = async (req, res) => {
-  const coins = await Item.find({});
+  const coins = await Item.find({}).sort({'market_cap': -1});
   if (coins) {
     res.status(200).send({
         coins
@@ -236,3 +250,52 @@ module.exports.updateTopExchanges = async (req, res) => {
  });
   res.status(200).send("updated exchange_top")
 };
+
+cron.schedule('* * * * 7', async () => {
+  console.log('running a task every sunday');
+  let start = 1;
+  const countRecords = await Item.countDocuments();
+  while (start < countRecords) {
+    await rp({
+      method: "GET",
+      uri: `${keys.uri}/cryptocurrency/listings/latest?limit=1000&start=${start}`,
+      headers: {
+        "X-CMC_PRO_API_KEY": keys.secret
+      },
+      json: true,
+      gzip: true
+    })
+      .then(async response => {
+        let coins = response.data;
+        for (coin in coins) {
+          const currentCoin = coins[coin];
+          const candidate = await Item.findOne({
+            id: currentCoin.id
+          });
+          if (candidate) {
+            console.log("item exist in the database", candidate.name);
+            const { circulating_supply, total_supply, max_supply, quote } = currentCoin;
+            await Item.updateOne(
+              { "id" : currentCoin.id },
+              { $set: {
+                  "circulating_supply": circulating_supply ? circulating_supply : 0,
+                  "total_supply": total_supply ? total_supply : 0,
+                  "max_supply": max_supply ? max_supply : 0,
+                  "price": quote.USD.price ? quote.USD.price : 0,
+                  "volume_24h": quote.USD.volume_24h ? quote.USD.volume_24h : 0,
+                  "percent_change_1h": quote.USD.percent_change_1h ? quote.USD.percent_change_1h : 0,
+                  "percent_change_24h": quote.USD.percent_change_24h ? quote.USD.percent_change_24h : 0,
+                  "percent_change_7d": quote.USD.percent_change_7d ? quote.USD.percent_change_7d : 0,
+                  "market_cap": quote.USD.market_cap ? quote.USD.market_cap : 0,
+                }
+              }
+            );
+          }
+        }
+        start += 1000;
+      })
+      .catch(err => {
+        console.log("API call error:", err.message);
+      });
+  }
+});

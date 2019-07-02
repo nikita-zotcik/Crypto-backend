@@ -120,8 +120,7 @@ module.exports.updateInfoExchanges = async (req, res) => {
 };
 
 module.exports.getExchangesFromDb = async (req, res) => {
-  const exchanges = await Exchanges.find({});
-  exchanges.sort((a, b) => b.volume_30d - a.volume_30d);
+  const exchanges = await Exchanges.find({}).sort({"volume_30d": -1});
   if (exchanges) {
     res.status(200).send({
       exchanges

@@ -87,6 +87,30 @@ const itemSchema = new Schema({
     type: Object,
     required: false
   },
+  price: {
+    type: Number,
+    required: false
+  },
+  volume_24h: {
+    type: Number,
+    required: false
+  },
+  percent_change_1h: {
+    type: Number,
+    required: false
+  },
+  percent_change_24h: {
+    type: Number,
+    required: false
+  },
+  percent_change_7d: {
+    type: Number,
+    required: false
+  },
+  market_cap: {
+    type: Number,
+    required: false
+  },
 });
 
 module.exports = mongoose.model("items", itemSchema);
