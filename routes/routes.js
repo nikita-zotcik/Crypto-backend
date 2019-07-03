@@ -23,6 +23,9 @@ router.get("/updateInfoExchangesCoins", coin.updateInfoExchangesCoins);
 //localhost:5000/api/updateTopExchanges
 router.get("/updateTopExchanges", coin.updateTopExchanges);
 
+//localhost:5000/api/updateHolders
+router.get("/updateHolders", coin.updateHolders);
+
 //localhost:5000/api/updateVolumeExchanges
 router.get("/updateVolumeExchanges", exchanges.updateVolumeExchanges);
 

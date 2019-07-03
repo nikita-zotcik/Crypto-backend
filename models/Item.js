@@ -111,6 +111,14 @@ const itemSchema = new Schema({
     type: Number,
     required: false
   },
+  holdersCount: {
+    type: Number,
+    required: false
+  },
+  transfersCount: {
+    type: Number,
+    required: false
+  }
 });
 
 module.exports = mongoose.model("items", itemSchema);

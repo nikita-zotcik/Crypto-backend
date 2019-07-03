@@ -251,6 +251,45 @@ module.exports.updateTopExchanges = async (req, res) => {
   res.status(200).send("updated exchange_top")
 };
 
+module.exports.updateHolders = async (req, res) => {
+  // let count = await Item.countDocuments();
+  // let start = 0;
+  // while (count > 0) {
+    const records = await Item.find().skip(0).limit(200);
+    for (coin in records) {
+      const item = records[coin];
+      let token = '';
+      item.explorer.forEach(temp => {
+        const str = temp.split('/');
+        if (str[2] === 'etherscan.io') token = str[4];
+      });
+      if (token) {
+        console.log('yes');
+        rp({
+          method: "GET",
+          uri: `http://api.ethplorer.io/getTokenInfo/${token}?apiKey=freekey`,
+          json: true,
+          gzip: true
+        })
+          .then(async result => {
+          await Item.updateOne(
+            {"id": item.id},
+            {
+              $set: {
+                "holdersCount": result.holdersCount ? result.holdersCount : 0,
+                "transfersCount": result.transfersCount ? result.transfersCount : 0,
+              }
+            });
+        })
+      }
+    }
+  //   start += 10;
+  //   count = count - 10;
+  //   await setTimeout(function() {console.log('timeout 6 second next')}, 6000);
+  // }
+  res.status(200).send("updated holders")
+};
+
 cron.schedule('* * * * 7', async () => {
   console.log('running a task every sunday');
   let start = 1;
