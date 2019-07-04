@@ -263,6 +263,13 @@ module.exports.updateHolders = async (req, res) => {
         const str = temp.split('/');
         if (str[2] === 'etherscan.io') token = str[4];
       });
+      if(!token) token = '';
+      if(token.length < 20) {
+        item.explorer.forEach(temp => {
+          const str = temp.split('/');
+          if (str[2] === 'ethplorer.io') token = str[4];
+        });
+      }
       if (token) {
         console.log('yes');
         rp({
@@ -288,6 +295,40 @@ module.exports.updateHolders = async (req, res) => {
   //   await setTimeout(function() {console.log('timeout 6 second next')}, 6000);
   // }
   res.status(200).send("updated holders")
+};
+
+module.exports.updateCoinsInfoHighLow = async (req, res) => {
+  const records = await Item.find();
+  for(i in records) {
+    const currentCoin = records[i];
+    if(!currentCoin.high) {
+      await rp({
+        method: "GET",
+        uri: `https://pro-api.coinmarketcap.com/v1/cryptocurrency/ohlcv/latest?id=${currentCoin.id}`,
+        headers: {
+          "X-CMC_PRO_API_KEY": keys.secret
+        },
+        json: true,
+        gzip: true
+      })
+        .then( async response => {
+          console.log("item updated in the database", currentCoin.name);
+          const result = response.data[currentCoin.id.toString()];
+          await Item.updateOne(
+            {"id": currentCoin.id},
+            {
+              $set: {
+                "high": 'high' in result.quote.USD ? result.quote.USD.high : 0,
+                "low": 'low' in result.quote.USD ? result.quote.USD.low : 0,
+              }
+            }
+          );
+        })
+        .catch(err => {
+          console.log("API call error:", err.message);
+        });
+    }
+  }
 };
 
 cron.schedule('* * * * 7', async () => {
@@ -336,5 +377,43 @@ cron.schedule('* * * * 7', async () => {
       .catch(err => {
         console.log("API call error:", err.message);
       });
+  }
+});
+
+cron.schedule('* * */24 * *', async () => {
+  console.log('running a task every 24 hours');
+  const  countResords = await Item.countDocuments();
+  let start = 0;
+  while(start < countResords) {
+    const records = await Item.find().skip(start).limit(100);
+    for (i in records) {
+      const currentCoin = records[i];
+      await rp({
+        method: "GET",
+        uri: `https://pro-api.coinmarketcap.com/v1/cryptocurrency/ohlcv/latest?id=${currentCoin.id}`,
+        headers: {
+          "X-CMC_PRO_API_KEY": keys.secret
+        },
+        json: true,
+        gzip: true
+      })
+        .then(async response => {
+          console.log("item updated in the database", currentCoin.name);
+          const result = response.data[currentCoin.id.toString()];
+          await Item.updateOne(
+            {"id": currentCoin.id},
+            {
+              $set: {
+                "high": 'high' in result.quote.USD ? result.quote.USD.high : 0,
+                "low": 'low' in result.quote.USD ? result.quote.USD.low : 0,
+              }
+            }
+          );
+        })
+        .catch(err => {
+          console.log("API call error:", err.message);
+        });
+      start += 100;
+    }
   }
 });

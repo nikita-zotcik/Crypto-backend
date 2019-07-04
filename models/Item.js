@@ -7,6 +7,10 @@ const itemSchema = new Schema({
     required: true,
     unique: true
   },
+  id_high_low: {
+    type: String,
+    required: false
+  },
   logo: {
     type: String,
     required: false
@@ -116,6 +120,14 @@ const itemSchema = new Schema({
     required: false
   },
   transfersCount: {
+    type: Number,
+    required: false
+  },
+  high: {
+    type: Number,
+    required: false
+  },
+  low: {
     type: Number,
     required: false
   }
