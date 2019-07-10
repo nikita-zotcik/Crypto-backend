@@ -3,6 +3,8 @@ const coin = require("../controllers/coin");
 const exchanges = require("../controllers/exchanges");
 const transactions = require("../controllers/transactions");
 const exchangesTagAddress = require("../controllers/exchangesTagAddress");
+const holders = require("../controllers/holders");
+const labelCoins = require("../controllers/labelCoins");
 const telegram = require("../controllers/telegram");
 const router = express.Router();
 
@@ -53,6 +55,18 @@ router.get("/getExchangesTagAddressFromDb", exchangesTagAddress.getExchangesTagA
 
 //localhost:5000/api/updateBalanceCountTxn
 router.get("/updateBalanceCountTxn", exchangesTagAddress.updateBalanceCountTxn);
+
+//localhost:5000/api/getHoldersFromDb
+router.get("/getHoldersFromDb", holders.getHoldersFromDb);
+
+//localhost:5000/api/newHolders
+router.get("/newHolders", holders.newHolders);
+
+//localhost:5000/api/getLabelsCoisFromDb
+router.get("/getLabelsCoisFromDb", labelCoins.getLabelsCoisFromDb);
+
+//localhost:5000/api/newLabels
+router.get("/newLabels", labelCoins.newLabels);
 
 //localhost:5000/api/getTelegram
 router.get("/getTelegram", telegram.getTelegram);
